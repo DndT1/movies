@@ -59,3 +59,68 @@ ggplot(movies, aes(x = tomatoMeter)) +
     title = "Distribution of Tomatometer Scores"
   )
 ```
+
+```{r}
+movies_gap <- movies |>
+  mutate(gap = tomatoMeter - audienceScore)
+
+movies_gap
+```
+
+```{r}
+movies_gap |>
+  distinct(title, .keep_all = TRUE) |>
+  filter(gap > 0) |>
+  arrange(desc(gap)) |>
+  slice_head(n = 8) |>
+  select(title, gap)
+```
+
+```{r}
+gap_by_genre <- movies_gap |>
+  separate_rows(genre, sep = ", ") |>
+  group_by(genre) |>
+  summarise(
+    mean_gap = mean(gap, na.rm = TRUE),
+    movie_count = n()
+  ) |>
+  filter(movie_count >= 50) |>
+  arrange(mean_gap)
+
+gap_by_genre
+```
+
+```{r}
+movies_gap |>
+  summarise(
+    mean_gap = mean(gap, na.rm = TRUE),
+    median_gap = median(gap, na.rm = TRUE),
+    sd_gap = sd(gap, na.rm = TRUE)
+  )
+```
+
+```{r}
+movies_summary <- movies_gap |>
+  group_by(genre) |>
+  summarise(
+    mean_gap = mean(gap, na.rm = TRUE),
+    movie_count = n()
+  ) |>
+  filter(movie_count >= 100) |>
+  arrange(mean_gap)
+
+movies_summary
+```
+
+```{r}
+ggplot(movies_summary, aes(x = reorder(genre, mean_gap), y = mean_gap)) +
+  geom_col() +
+  geom_hline(yintercept = 0) +
+  coord_flip() +
+  labs(
+    title = "Average Critic-Audience Gap by Genre",
+    subtitle = "Negative values favor audiences; positive values favor critics",
+    x = "Genre",
+    y = "Average gap"
+  )
+```
